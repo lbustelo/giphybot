@@ -1,0 +1,15 @@
+{
+  "name": "robot",
+  "version": "1.0.0",
+  "description": "My first robot",
+  "main": "robot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Gino Bustelo",
+  "license": "ISC",
+  "dependencies": {
+    "botkit": "^0.2.2",
+    "moment": "^2.14.1"
+  }
+}
