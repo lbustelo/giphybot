@@ -10,6 +10,7 @@ var Stats = function(config){
   this.points = config.points || this.points;
   this.level = config.level || this.level;
 
+  this.start_point = this.points;
   this.emitter = new EventEmitter();
 }
 
@@ -26,7 +27,7 @@ Stats.prototype.onLevelUp = function(callback){
 
 Stats.prototype.rate = function(){
   var timeSinceStart = Math.ceil(moment.duration(moment().diff(this.start_time)).asMinutes());
-  return this.points/timeSinceStart;
+  return (this.points-this.start_point)/timeSinceStart;
 }
 
 Stats.prototype.up = function(){
