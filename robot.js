@@ -37,6 +37,7 @@ function createChannelStats(bot, aGiphy){
       }, savedState.stats));
 
       aChanStats.onLevelUp(function(){
+        console.log("Sending level up message", aChanStats, channel);
         bot.say({
           text: toChannelLevelUpMessage(aChanStats),
           channel: channel
@@ -140,13 +141,13 @@ function onGiphy(bot,message) {
 function toChannelLevelUpMessage(aChanStats){
   return `*Level Up!*
 This channel is now at level *${aChanStats.level}*
-Currently producing giphys at *${aChanStats.rate()} gpm*
+Currently producing giphys at *${Math.round(aChanStats.rate() * 100) / 100} gpm*
 `
 }
 
 function toUserLevelUpMessage(user, aUserStats){
   return `*Level Up!*
 *${user}* is now at level *${aUserStats.level}*
-Currently producing giphys at *${aUserStats.rate()} gpm*
+Currently producing giphys at *${Math.round(aUserStats.rate() * 100) / 100} gpm*
 `
 }
