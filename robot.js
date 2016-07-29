@@ -46,24 +46,30 @@ controller.spawn({
 }).startRTM()
 
 // Reset statistics
-controller.hears('reset',['direct_message'],function(bot,message) {
+controller.hears('^\s*(reset)\s*$',['direct_mention'],onReset);
+controller.hears('^\s*(reset)\s*$',['direct_message'],onReset);
+
+// Track latest giphy and record stats
+controller.hears('\/giphy (.*)',['message_received', 'direct_message', 'ambient'],onGiphy);
+
+//handlers
+function onReset(bot,message) {
   if( message.user === BOT_MASTER ){
     bot.reply(message,'Ok... reseting all stats.');
-    Object.keys(channel_stats).foreach(function(chan_stat){
+    Object.keys(channel_stats).forEach(function(chan_stat){
       chan_stat.reset();
     })
   }
   else{
     bot.reply(message, 'You are not my master. I do what I want!');
   }
-});
+}
 
-// Track latest giphy and record stats
-controller.hears('\/giphy (.*)',['message_received', 'direct_message', 'ambient'],function(bot,message) {
+function onGiphy(bot,message) {
   console.log("Saw a giphy...");
   var aGiphy = giphy.fromMessage(message);
   getOfCreateChannelStats(bot, aGiphy).up();
-});
+}
 
 //messages
 function toLevelUpMessage(aChanStats){
