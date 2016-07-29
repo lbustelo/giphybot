@@ -10,6 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "botkit": "^0.2.2",
-    "moment": "^2.14.1"
+    "mixin-object": "^2.0.1",
+    "moment": "^2.14.1",
+    "promise": "^7.1.1"
   }
 }

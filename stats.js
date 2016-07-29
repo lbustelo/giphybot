@@ -5,7 +5,10 @@ const LEVEL_UP_EVENT="level_up";
 
 var Stats = function(config){
   var config = config || {};
+
   this.threshold = config.threshold || this.threshold;
+  this.points = config.points || this.points;
+  this.level = config.level || this.level;
 
   this.emitter = new EventEmitter();
 }
@@ -38,6 +41,13 @@ Stats.prototype.reset = function(){
   this.level = 1;
   this.points = 0;
   this.start_time = moment();
+}
+
+Stats.prototype.summary = function(){
+  return {
+    points: this.points,
+    level: this.level
+  }
 }
 
 module.exports = function(config){

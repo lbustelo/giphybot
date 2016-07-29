@@ -38,3 +38,7 @@ var Giphy = function(message){
 Giphy.prototype.channel = function(){
   return this.msg.channel;
 }
+
+Giphy.prototype.user = function(){
+  return this.msg.user_profile.name;
+}
