@@ -1,3 +1,5 @@
+var mixin = require('mixin-object');
+
 /*
 Sample message
 { type: 'message',
@@ -40,5 +42,7 @@ Giphy.prototype.channel = function(){
 }
 
 Giphy.prototype.user = function(){
-  return this.msg.user_profile.name;
+  return mixin({
+    id: this.msg.user
+  }, this.msg.user_profile);
 }

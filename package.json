@@ -9,6 +9,7 @@
   "author": "Gino Bustelo",
   "license": "ISC",
   "dependencies": {
+    "ascii-table": "0.0.9",
     "botkit": "^0.2.2",
     "mixin-object": "^2.0.1",
     "moment": "^2.14.1",
