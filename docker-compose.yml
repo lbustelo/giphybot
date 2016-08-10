@@ -1,0 +1,16 @@
+giphybot:
+  build: .
+  links:
+   - postgres
+  volumes:
+    - .:/giphybot
+  environment:
+    DB_NAME: giphybot
+    DB_USER: test
+    DB_PW: test
+
+postgres:
+  image: postgres:9.4
+  environment:
+    POSTGRES_USER: test
+    POSTGRES_PASSWORD: test

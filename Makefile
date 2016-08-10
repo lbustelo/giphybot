@@ -1,9 +1,11 @@
-.PHONY: help init build run debug unit-test system-test test all
+.PHONY: help init build run debug db-sync unit-test system-test test all shutdown clean
 .DEFAULT_GOAL := help
 
 BOT_DEBUG?=false
 SLACK_TOKEN?=
 BOT_MASTER?=
+DB_HOST?=giphybot_postgres_1
+DB_CONTAINER?=giphybot_postgres_1
 
 help:
 	#source:http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
@@ -15,13 +17,27 @@ init: ## Installs d
 build: ## Builds the project
 
 run: ## Run robot
-	BOT_DEBUG=$(BOT_DEBUG) SLACK_TOKEN=$(SLACK_TOKEN) BOT_MASTER=$(BOT_MASTER) node robot.js
+	@docker-compose run \
+		-e DB_HOST=$(DB_HOST) \
+		-e BOT_DEBUG=$(BOT_DEBUG) \
+		-e SLACK_TOKEN=$(SLACK_TOKEN) \
+		-e BOT_MASTER=$(BOT_MASTER) \
+		giphybot bash -c "npm run start"
 
 debug: BOT_DEBUG:=true
 debug: run
 debug: ## Run robot in debug mode
 
+db-init: ## Synchronizes/Initializes the database
+	@docker-compose run \
+		-e DB_HOST=$(DB_HOST) \
+		giphybot bash -c "npm run db-init"
+
+exec-psql: ## Exec into the postgres container and runs psql
+	@docker exec -it $(DB_CONTAINER) bash -c 'psql -U $${POSTGRES_USER}'
+
 unit-test: ## Runs the unit tests for the project
+	@docker-compose run -e DB_HOST=$(DB_HOST) giphybot /bin/sh -c "sleep 2; npm run test-unit"
 
 system-test: ## Runs the system tests for the project
 
@@ -32,5 +48,9 @@ test: ## Runs all the tests for the project
 all: build test
 all: ## Runs the build and tests targets
 
+shutdown: ## Stops all containers
+	docker-compose stop
+
+clean: shutdown
 clean: ## Cleans environment
 	-@rm -rf node_modules
