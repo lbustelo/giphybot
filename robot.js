@@ -1,7 +1,6 @@
 var Botkit = require('botkit');
 var Promise = require('promise');
 var mixin = require('mixin-object');
-var AsciiTable = require('ascii-table')
 
 var store = require('./lib/models/index');
 
@@ -65,6 +64,7 @@ function onGiphy(bot,message) {
           console.log("Starting game...");
           game.start();
           game.save();
+          setSpecialGiphy(game);
         }
         console.log("Playing game " + game.get('id'));
         return game;
@@ -107,20 +107,33 @@ function onGiphy(bot,message) {
             console.log("Latest post:", post.id);
         }
       )
+      //compute points
 
       store.Stat.get('points',player,game).then(function(points){
+        //all posts are 1 point regardless
         points.inc();
+
+        //special giphy bonus points
+        store.Settings.get(game,'special_giphy').then(
+          function(special_giphy_setting){
+            if( giphy.id === special_giphy_setting.value ){
+              var bonus = 10;
+              points.inc(bonus);
+              var bonusMessage = require('./lib/messages/secret_giphy_bonus')(player, bonus, giphy);
+              bot.reply(message,bonusMessage);
+              setSpecialGiphy(game);
+            }
+          }
+        );
+
+
       });
 
       //record the post
       return game.post(giphy).by(player).save();
     }
-  ).then(
-    function(post){
-
-    }
   ).catch(function(err){
-    console.error("Not able to process giphy,", err);
+    console.error("Not able to process giphy,", err, message);
   });
 
 }
@@ -137,7 +150,7 @@ function onEndGame(bot,message) {
         game.finish();
         game.save().then(function(game){
           bot.reply(message,"Game Over!");
-          //TODO: print final scores
+          displayLeaderboard(bot, message, game, 'Final Standings');
         });
     }
   );
@@ -150,24 +163,42 @@ function onLeaderboard(bot, message) {
       return;
     }
 
-    store.Stat.in(game).top("points", 10).then(
-      function(pointStats){
-        var promises = pointStats.map(function(pointStat){
-          return slack_users.get(pointStat.Player.messaging_id).then(
-            function(user){
-              return {
-                id: user.id,
-                name: user.name,
-                points: Math.round(pointStat.value)
-              };
-            });
-        });
-        Promise.all(promises).then(function(scores){
-          bot.reply(message,toLeaderBoardMessage(scores));
-        });
-      }
-    );
+    displayLeaderboard(bot, message, game);
   });
+}
+
+function setSpecialGiphy(game){
+  store.Giphy.randomPick().then(
+    function(pickedGiphy){
+      if(pickedGiphy){
+        store.Settings.put(game,'special_giphy', pickedGiphy.id);
+      }
+      else {
+        console.log("This game will not have special giphy.")
+      }
+    }
+  );
+}
+
+function displayLeaderboard(bot, message, game, title){
+  store.Stat.in(game).top("points", 10).then(
+    function(pointStats){
+      var promises = pointStats.map(function(pointStat){
+        return slack_users.get(pointStat.Player.messaging_id).then(
+          function(user){
+            return {
+              id: user.id,
+              name: user.name,
+              points: Math.round(pointStat.value)
+            };
+          });
+      });
+      Promise.all(promises).then(function(scores){
+        var leaderboardMessage = require('./lib/messages/leaderboard')(scores, title);
+        bot.reply(message,leaderboardMessage);
+      });
+    }
+  );
 }
 
 //messages
@@ -183,29 +214,4 @@ function toUserLevelUpMessage(user, aUserStats){
 <@${user.id}> is now at level *${aUserStats.level}*
 Currently producing giphys at *${Math.round(aUserStats.rate() * 100) / 100} gpm*
 `
-}
-
-function toLeaderBoardMessage(scoreboard){
-  var table = new AsciiTable();
-  table.setAlign(0, AsciiTable.RIGHT)
-    .setAlign(1, AsciiTable.LEFT)
-    .setAlign(2, AsciiTable.RIGHT);
-
-  scoreboard.forEach(function(user, idx){
-    table.addRow(idx+1, `<@${user.name}>`, `${user.points} pts`)
-  });
-
-  table.removeBorder();
-
-  var message =  {attachments: [{
-    fallback: "Visit channel for current standings.",
-    pretext: "*Current Standings*",
-    text: '```\u200b'+table.toString()+'```',
-    color: '#FD6729',
-    thumb_url: "http://www.betbattle.com/wp-content/uploads/2014/05/leaderboard.png",
-    mrkdwn_in: ["text", "pretext"]
-  }]};
-
-  console.log( "Leaderboard Message", message);
-  return message;
 }
