@@ -5,7 +5,8 @@ var mixin = require('mixin-object');
 var store = require('./lib/models/index');
 
 //missions
-var MatchTheGiphy = require('./lib/missions/giphy_match');
+var StandardMission = require('./lib/missions/standard');
+var MatchTheGiphyMission = require('./lib/missions/giphy_match');
 
 //environment
 var BOT_MASTER        = process.env.BOT_MASTER;
@@ -62,7 +63,7 @@ function secure(handler) {
 
 //handlers
 function onGiphy(bot,message) {
-  console.log("Got a giphy...");
+  console.log("Got a giphy...", message);
   store.Game.forChannel(message.channel).then(
     function(game){
         //start or get current game
@@ -72,8 +73,9 @@ function onGiphy(bot,message) {
           game.start();
           game.save();
 
-          //start the mission
-          MatchTheGiphy.for(game).start(bot.reply.bind(bot, message));
+          //start missions
+          StandardMission.for(game).start(bot.reply.bind(bot, message));
+          MatchTheGiphyMission.for(game).start(bot.reply.bind(bot, message));
         }
         console.log("Playing game " + game.get('id'));
         return game;
@@ -106,13 +108,9 @@ function onGiphy(bot,message) {
     }
   ).then(
       function([game, player, post]){
-        store.Stat.get('points',player,game).then(function(points){
-          //all posts are 1 point regardless
-          points.inc();
-        });
-
-        //current mission
-        MatchTheGiphy.for(game).onPost(post, bot.reply.bind(bot, message));
+        //process missions
+        StandardMission.for(game).onPost(post, bot.reply.bind(bot, message));
+        MatchTheGiphyMission.for(game).onPost(post, bot.reply.bind(bot, message));
       }
   ).catch(function(err){
     console.error("Not able to process giphy,", err, message);
@@ -121,32 +119,33 @@ function onGiphy(bot,message) {
 }
 
 function onShowChallenge(bot,message) {
-  console.log("Showing challenge");
+  console.log("Showing challenge", message);
   store.Game.forChannel(message.channel, true).then(
     function(game){
       if(!game){
         bot.reply(message,"No active game. Start one by posting a giphy!");
         return;
       }
-      MatchTheGiphy.for(game).show(bot.reply.bind(bot, message));
+      MatchTheGiphyMission.for(game).show(bot.reply.bind(bot, message));
     }
   );
 }
 
 function onResetChallenge(bot,message) {
-  console.log("Reset challenge");
+  console.log("Reset challenge", message);
   store.Game.forChannel(message.channel, true).then(
     function(game){
       if(!game){
         bot.reply(message,"No active game. Start one by posting a giphy!");
         return;
       }
-      MatchTheGiphy.for(game).reset(bot.reply.bind(bot, message));
+      MatchTheGiphyMission.for(game).reset(bot.reply.bind(bot, message));
     }
   );
 }
 
 function onEndGame(bot,message) {
+  console.log("Ending game", message);
   store.Game.forChannel(message.channel, true).then(
     function(game){
         if(!game){
