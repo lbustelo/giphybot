@@ -43,7 +43,7 @@ controller.hears('^\s*settings\s*(.*)$',['direct_mention'],secure(onSettings));
 controller.hears('^\s*leaderboard\s*$',['direct_mention'],secure(onLeaderboard));
 
 // Track latest giphy and record stats
-controller.hears('\/giphy (.*)',['message_received', 'direct_message', 'ambient'],onGiphy);
+controller.hears('\/giphy (.*)',['message_received', 'direct_message', 'mention', 'ambient'],onGiphy);
 
 // Current challenge
 controller.hears('^\s*show challenge\s*$',['direct_mention'],onShowChallenge);
