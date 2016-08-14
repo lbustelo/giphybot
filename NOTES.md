@@ -1,7 +1,6 @@
-var mixin = require('mixin-object');
+Sample giphy post message
 
-/*
-Sample message
+``` javascript
 { type: 'message',
   user: 'U07BYJPQD',
   text: '/giphy test1',
@@ -27,22 +26,4 @@ Sample message
   ts: '1469712397.000010',
   event: 'direct_message',
   match: [ '/giphy test1', 'test1', index: 0, input: '/giphy test1' ] }
-*/
-
-module.exports.fromMessage = function(message){
-  return new Giphy(message);
-}
-
-var Giphy = function(message){
-  this.msg = message;
-}
-
-Giphy.prototype.channel = function(){
-  return this.msg.channel;
-}
-
-Giphy.prototype.user = function(){
-  return mixin({
-    id: this.msg.user
-  }, this.msg.user_profile);
-}
+```
