@@ -36,19 +36,21 @@ controller.spawn({token: SLACK_TOKEN,}).startRTM(
   }
 );
 
+// Settings
+controller.hears('^\s*settings\s*(.*)$',['direct_mention'],secure(onSettings));
+
 // Leaderboard
-controller.hears('^\s*(leaderboard)\s*$',['direct_mention'],secure(onLeaderboard));
-controller.hears('^\s*(leaderboard)\s*$',['direct_message'],secure(onLeaderboard));
+controller.hears('^\s*leaderboard\s*$',['direct_mention'],secure(onLeaderboard));
 
 // Track latest giphy and record stats
 controller.hears('\/giphy (.*)',['message_received', 'direct_message', 'ambient'],onGiphy);
 
 // Current challenge
-controller.hears('^\s*(show challenge)\s*$',['direct_mention'],onShowChallenge);
-controller.hears('^\s*(reset challenge)\s*$',['direct_mention'],onResetChallenge);
+controller.hears('^\s*show challenge\s*$',['direct_mention'],onShowChallenge);
+controller.hears('^\s*reset challenge\s*$',['direct_mention'],onResetChallenge);
 
 // End current game
-controller.hears('^\s*(end game)\s*$',['direct_mention'],secure(onEndGame));
+controller.hears('^\s*end game\s*$',['direct_mention'],secure(onEndGame));
 
 function secure(handler) {
   return function(bot,message){
@@ -163,6 +165,58 @@ function onEndGame(bot,message) {
   );
 }
 
+function onSettings(bot, message) {
+  store.Game.forChannel(message.channel, true).then(function(game){
+    if(!game){
+      bot.reply(message,"No active game.");
+      return;
+    }
+
+    var params = message.match[1].trim();
+    if( !params ){
+      displaySettings(bot,message,game);
+    }
+    else{
+      var puts = params.split(',').map(
+        function(param){
+          var parts = param.split('='),
+            name = parts[0].trim();
+            value = parts[1].trim();
+
+          return store.Settings.put(game, name, value);
+        }
+      );
+
+      Promise.all(puts).then(
+        function(){
+          displaySettings(bot,message,game);
+        }
+      );
+    }
+  });
+}
+
+function displaySettings(bot, message, game){
+  store.Settings.for(game).getAll().then(
+    function(settings){
+      if(settings.length == 0){
+        bot.reply(message,'I looks and looked, and did not find any settings');
+      }
+      else{
+        var allSettings = {};
+        settings.forEach(
+          function(setting){
+            allSettings[setting.name] = setting.value;
+          }
+        );
+
+        var settingsMessage = require('./lib/messages/settings')(allSettings);
+        bot.reply(message,settingsMessage);
+      }
+    }
+  );
+}
+
 function onLeaderboard(bot, message) {
   store.Game.forChannel(message.channel, true).then(function(game){
     if(!game){
@@ -177,20 +231,25 @@ function onLeaderboard(bot, message) {
 function displayLeaderboard(bot, message, game, title){
   store.Stat.in(game).top("points", 10).then(
     function(pointStats){
-      var promises = pointStats.map(function(pointStat){
-        return slack_users.get(pointStat.Player.messaging_id).then(
-          function(user){
-            return {
-              id: user.id,
-              name: user.name,
-              points: Math.round(pointStat.value)
-            };
-          });
-      });
-      Promise.all(promises).then(function(scores){
-        var leaderboardMessage = require('./lib/messages/leaderboard')(scores, title);
-        bot.reply(message,leaderboardMessage);
-      });
+      if(pointStats.length == 0){
+        bot.reply(message,'Where\'s everybody?');
+      }
+      else{
+        var promises = pointStats.map(function(pointStat){
+          return slack_users.get(pointStat.Player.messaging_id).then(
+            function(user){
+              return {
+                id: user.id,
+                name: user.name,
+                points: Math.round(pointStat.value)
+              };
+            });
+        });
+        Promise.all(promises).then(function(scores){
+          var leaderboardMessage = require('./lib/messages/leaderboard')(scores, title);
+          bot.reply(message,leaderboardMessage);
+        });
+      }
     }
   );
 }
