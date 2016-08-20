@@ -2,6 +2,7 @@
 .DEFAULT_GOAL := help
 
 BOT_DEBUG?=false
+DB_DEBUG?=false
 SLACK_TOKEN?=
 BOT_MASTER?=
 DB_HOST?=giphybot_postgres_1
@@ -20,11 +21,13 @@ run: ## Run robot
 	@docker-compose run \
 		-e DB_HOST=$(DB_HOST) \
 		-e BOT_DEBUG=$(BOT_DEBUG) \
+		-e DB_DEBUG=$(DB_DEBUG) \
 		-e SLACK_TOKEN=$(SLACK_TOKEN) \
 		-e BOT_MASTER=$(BOT_MASTER) \
 		giphybot bash -c "npm run start"
 
 debug: BOT_DEBUG:=true
+debug: DB_DEBUG:=true
 debug: run
 debug: ## Run robot in debug mode
 
@@ -37,7 +40,7 @@ exec-psql: ## Exec into the postgres container and runs psql
 	@docker exec -it $(DB_CONTAINER) bash -c 'psql -U $${POSTGRES_USER}'
 
 unit-test: ## Runs the unit tests for the project
-	@docker-compose run -e DB_HOST=$(DB_HOST) giphybot /bin/sh -c "sleep 2; npm run test-unit"
+	@docker-compose run giphybot npm run test-unit
 
 system-test: ## Runs the system tests for the project
 

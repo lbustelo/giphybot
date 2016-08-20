@@ -5,13 +5,15 @@ module.exports = {
     "database": "test",
     "host": process.env.DB_HOST || "127.0.0.1",
     "dialect": "postgres",
-    "migrationStorage": "none"
+    "migrationStorage": "none",
+    "logging": (process.env.DB_DEBUG==='true')
   },
   "production": {
     "username": "root",
     "password": null,
     "database": "database_production",
     "host": process.env.DB_HOST || "127.0.0.1",
-    "dialect": "mysql"
+    "dialect": "postgres",
+    "logging": (process.env.DB_DEBUG==='true')
   }
 }
