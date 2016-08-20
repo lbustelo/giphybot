@@ -5,7 +5,7 @@
   "main": "robot.js",
   "scripts": {
     "start": "node robot.js",
-    "db-init": "node lib/db_init.js",
+    "db-init": "node scripts/db_init.js",
     "test-unit": "./node_modules/.bin/mocha --globals setImmediate,clearImmediate --ui tdd --check-leaks --colors -t 30000 --reporter spec 'test/*_spec.js'"
   },
   "author": "Gino Bustelo",
