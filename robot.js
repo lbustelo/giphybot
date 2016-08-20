@@ -148,7 +148,11 @@ function onResetChallenge(bot,message) {
 function onSettings(bot, message) {
   store.Game.forChannel(message.channel, true).then(function(game){
     if(!game){
-      bot.reply(message,"No active game.");
+      bot.startPrivateConversation(message,function(response,convo){
+        convo.say("No active game.");
+        convo.next();
+      });
+      // bot.reply(message,"No active game.");
       return;
     }
 
