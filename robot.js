@@ -5,6 +5,7 @@ var store = require('./lib/models');
 //missions
 var StandardMission = require('./lib/missions/standard');
 var MatchTheGiphyMission = require('./lib/missions/giphy_match');
+var GiphyMinesMission = require('./lib/missions/giphy_mines');
 
 //environment
 var BOT_MASTER        = process.env.BOT_MASTER;
@@ -76,6 +77,7 @@ function onGiphy(bot,message) {
           //start missions
           StandardMission.for(game).start(bot.reply.bind(bot, message));
           MatchTheGiphyMission.for(game).start(bot.reply.bind(bot, message));
+          GiphyMinesMission.for(game).start(bot.reply.bind(bot, message));
         }
         console.log("Playing game " + game.get('id'));
         return game;
@@ -111,6 +113,7 @@ function onGiphy(bot,message) {
         //process missions
         StandardMission.for(game).onPost(post, bot.reply.bind(bot, message));
         MatchTheGiphyMission.for(game).onPost(post, bot.reply.bind(bot, message));
+        GiphyMinesMission.for(game).onPost(post, bot.reply.bind(bot, message));
       }
   ).catch(function(err){
     console.error("Not able to process giphy,", err, message);
