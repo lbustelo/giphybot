@@ -2,7 +2,7 @@ var Botkit = require('botkit');
 var Promise = require('promise');
 var mixin = require('mixin-object');
 
-var store = require('./lib/models/index');
+var store = require('./lib/models');
 
 //missions
 var StandardMission = require('./lib/missions/standard');
@@ -24,15 +24,12 @@ var controller = Botkit.slackbot({
   debug: BOT_DEBUG
 });
 
-var slack_users; //set up after a spawn
-
 // connect the bot to a stream of messages
 controller.spawn({token: SLACK_TOKEN,}).startRTM(
   function (err, bot) {
     if (err) {
         throw new Error(err);
     }
-    slack_users = require('./lib/slack/users')(bot);
   }
 );
 
@@ -40,7 +37,8 @@ controller.spawn({token: SLACK_TOKEN,}).startRTM(
 controller.hears('^\s*settings\s*(.*)$',['direct_mention'],secure(onSettings));
 
 // Leaderboard
-controller.hears('^\s*leaderboard\s*$',['direct_mention'],secure(onLeaderboard));
+var LeaderboardController = require('./lib/controllers/leaderboard');
+controller.hears('^\s*leaderboard\s*$',['direct_mention'],LeaderboardController);
 
 // Track latest giphy and record stats
 controller.hears('\/giphy (.*)',['message_received', 'direct_message', 'mention', 'ambient'],onGiphy);
@@ -50,7 +48,8 @@ controller.hears('^\s*show challenge\s*$',['direct_mention'],onShowChallenge);
 controller.hears('^\s*reset challenge\s*$',['direct_mention'],onResetChallenge);
 
 // End current game
-controller.hears('^\s*end game\s*$',['direct_mention'],secure(onEndGame));
+var EndController = require('./lib/controllers/end');
+controller.hears('^\s*end game\s*$',['direct_mention'],secure(EndController));
 
 function secure(handler) {
   return function(bot,message){
@@ -146,25 +145,6 @@ function onResetChallenge(bot,message) {
   );
 }
 
-function onEndGame(bot,message) {
-  console.log("Ending game", message);
-  store.Game.forChannel(message.channel, true).then(
-    function(game){
-        if(!game){
-          bot.reply(message,"No active game.");
-          return;
-        }
-
-        console.log("Ending game " + game.get('id'));
-        game.finish();
-        game.save().then(function(game){
-          bot.reply(message,"Game Over!");
-          displayLeaderboard(bot, message, game, 'Final Standings');
-        });
-    }
-  );
-}
-
 function onSettings(bot, message) {
   store.Game.forChannel(message.channel, true).then(function(game){
     if(!game){
@@ -212,43 +192,6 @@ function displaySettings(bot, message, game){
 
         var settingsMessage = require('./lib/messages/settings')(allSettings);
         bot.reply(message,settingsMessage);
-      }
-    }
-  );
-}
-
-function onLeaderboard(bot, message) {
-  store.Game.forChannel(message.channel, true).then(function(game){
-    if(!game){
-      bot.reply(message,"No active game.");
-      return;
-    }
-
-    displayLeaderboard(bot, message, game);
-  });
-}
-
-function displayLeaderboard(bot, message, game, title){
-  store.Stat.in(game).top("points", 10).then(
-    function(pointStats){
-      if(pointStats.length == 0){
-        bot.reply(message,'Where\'s everybody?');
-      }
-      else{
-        var promises = pointStats.map(function(pointStat){
-          return slack_users.get(pointStat.Player.messaging_id).then(
-            function(user){
-              return {
-                id: user.id,
-                name: user.name,
-                points: Math.round(pointStat.value)
-              };
-            });
-        });
-        Promise.all(promises).then(function(scores){
-          var leaderboardMessage = require('./lib/messages/leaderboard')(scores, title);
-          bot.reply(message,leaderboardMessage);
-        });
       }
     }
   );
