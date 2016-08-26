@@ -1,7 +1,5 @@
 var Botkit = require('botkit');
-var Promise = require('promise');
 var mixin = require('mixin-object');
-
 var store = require('./lib/models');
 
 //missions
@@ -34,7 +32,8 @@ controller.spawn({token: SLACK_TOKEN,}).startRTM(
 );
 
 // Settings
-controller.hears('^\s*settings\s*(.*)$',['direct_mention'],secure(onSettings));
+var SettingsController = require('./lib/controllers/settings');
+controller.hears('^\s*settings( game [0-9]+)?(.*=.*)*$',['direct_message', 'direct_mention'],secure(SettingsController));
 
 // Leaderboard
 var LeaderboardController = require('./lib/controllers/leaderboard');
@@ -141,62 +140,6 @@ function onResetChallenge(bot,message) {
         return;
       }
       MatchTheGiphyMission.for(game).reset(bot.reply.bind(bot, message));
-    }
-  );
-}
-
-function onSettings(bot, message) {
-  store.Game.forChannel(message.channel, true).then(function(game){
-    if(!game){
-      bot.startPrivateConversation(message,function(response,convo){
-        convo.say("No active game.");
-        convo.next();
-      });
-      // bot.reply(message,"No active game.");
-      return;
-    }
-
-    var params = message.match[1].trim();
-    if( !params ){
-      displaySettings(bot,message,game);
-    }
-    else{
-      var puts = params.split(',').map(
-        function(param){
-          var parts = param.split('='),
-            name = parts[0].trim();
-            value = parts[1].trim();
-
-          return store.Settings.put(game, name, value);
-        }
-      );
-
-      Promise.all(puts).then(
-        function(){
-          displaySettings(bot,message,game);
-        }
-      );
-    }
-  });
-}
-
-function displaySettings(bot, message, game){
-  store.Settings.for(game).getAll().then(
-    function(settings){
-      if(settings.length == 0){
-        bot.reply(message,'I looks and looked, and did not find any settings');
-      }
-      else{
-        var allSettings = {};
-        settings.forEach(
-          function(setting){
-            allSettings[setting.name] = setting.value;
-          }
-        );
-
-        var settingsMessage = require('./lib/messages/settings')(allSettings);
-        bot.reply(message,settingsMessage);
-      }
     }
   );
 }
