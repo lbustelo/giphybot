@@ -12,8 +12,6 @@ var BOT_MASTER        = process.env.BOT_MASTER;
 var SLACK_TOKEN       = process.env.SLACK_TOKEN;
 var BOT_DEBUG         = (process.env.BOT_DEBUG==='true');
 
-var GLOBAL_THRESHOLD  = process.env.GLOBAL_THRESHOLD;
-
 if( !SLACK_TOKEN ){
   console.log('Error: Specify SLACK_TOKEN in environment');
   process.exit(1);
@@ -43,7 +41,10 @@ controller.hears('^\s*leaderboard\s*$',['direct_mention'],LeaderboardController)
 // Track latest giphy and record stats
 controller.hears('\/giphy (.*)',['message_received', 'direct_message', 'mention', 'ambient'],onGiphy);
 
-// Current challenge
+// Mine challenge
+controller.hears('^\s*set mines\s*$',['direct_mention'],GiphyMinesMission.controller);
+
+// Match challenge
 controller.hears('^\s*show challenge\s*$',['direct_mention'],onShowChallenge);
 controller.hears('^\s*reset challenge\s*$',['direct_mention'],onResetChallenge);
 
