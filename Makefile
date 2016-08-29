@@ -39,8 +39,13 @@ db-init: ## Synchronizes/Initializes the database
 exec-psql: ## Exec into the postgres container and runs psql
 	@docker exec -it $(DB_CONTAINER) bash -c 'psql -U $${POSTGRES_USER}'
 
+unit-test: DB_DEBUG:=true
 unit-test: ## Runs the unit tests for the project
-	@docker-compose run giphybot npm run test-unit
+	@docker-compose run \
+		-e DB_ENV=test \
+		-e DB_HOST=$(DB_HOST) \
+		-e DB_DEBUG=$(DB_DEBUG) \
+		giphybot npm run test-unit
 
 system-test: ## Runs the system tests for the project
 

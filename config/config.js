@@ -1,5 +1,6 @@
 module.exports = {
-  db: {
+  "db_env": process.env.DB_ENV || 'development',
+  "db": {
     "test": {
       "username": "test",
       "password": "test",
