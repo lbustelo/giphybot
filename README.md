@@ -15,4 +15,3 @@ node robot.js
 
 - `SLACK_TOKEN`: Token for the bot configured [here](https://my.slack.com/services/new/bot)
 - `BOT_MASTER`: Slack ID for user. (Currently the alpha-numerical ID, not the @name.
-- `GLOBAL_THRESHOLD`: Number that determines when to level up
